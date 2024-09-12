@@ -4,6 +4,8 @@ Con mi script podrás; Guardar mensajes secretos en imágenes con formato .PNG s
 --------
 Te deje un desafio para que te entretengas y uses este script con un ejemplo práctico. Adjunto a este repositorio verás la foto de un perro labrador la cual viene encriptada con un mensaje, también te deje el password búscalo también en este repositorio. usa mi programa para saber la contraseña detrás de la imagen. buena suerte mi querido Padawan!
 --------
+![](https://github.com/viajatech/Hyde/blob/main/PERRO_stego.png).
+--------
 Deja tu estrella si usas mi script, gracias! 
 --------
 Redes sociales; @viajatech

@@ -1,0 +1,227 @@
+
+#Por David Ruiz
+#Puedes usar mi script siempre y cuando me des créditos en mis redes sociales @viajatech
+#Se agredecido y dale estrella a este repositorio, gracias! 
+
+#Version GUI Tkinter
+
+#pip install pillow numpy cryptography
+
+
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from tkinter import ttk
+import numpy as np
+from PIL import Image
+from cryptography.fernet import Fernet
+import base64
+import os
+
+class HydeApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("HYDE by Viaja Tech")
+        self.create_widgets()
+
+    def create_widgets(self):
+        tab_control = ttk.Notebook(self.root)
+
+        # Tab para ocultar mensaje
+        self.tab_hide = ttk.Frame(tab_control)
+        tab_control.add(self.tab_hide, text='Ocultar Mensaje')
+
+        # Tab para extraer mensaje
+        self.tab_extract = ttk.Frame(tab_control)
+        tab_control.add(self.tab_extract, text='Extraer Mensaje')
+
+        tab_control.pack(expand=1, fill='both')
+
+        self.create_hide_tab()
+        self.create_extract_tab()
+
+    def create_hide_tab(self):
+        # Widgets para ocultar mensaje
+        ttk.Label(self.tab_hide, text="Selecciona la imagen de entrada:").grid(column=0, row=0, padx=10, pady=10, sticky='W')
+        self.input_image_path = tk.StringVar()
+        ttk.Entry(self.tab_hide, textvariable=self.input_image_path, width=50).grid(column=1, row=0, padx=10, pady=10)
+        ttk.Button(self.tab_hide, text="Buscar", command=self.browse_input_image).grid(column=2, row=0, padx=10, pady=10)
+
+        ttk.Label(self.tab_hide, text="Introduce el mensaje a ocultar:").grid(column=0, row=1, padx=10, pady=10, sticky='W')
+        self.message_to_hide = tk.Text(self.tab_hide, height=5, width=50)
+        self.message_to_hide.grid(column=1, row=1, padx=10, pady=10, columnspan=2)
+
+        ttk.Button(self.tab_hide, text="Ocultar Mensaje", command=self.hide_message).grid(column=1, row=2, padx=10, pady=10)
+
+    def create_extract_tab(self):
+        # Widgets para extraer mensaje
+        ttk.Label(self.tab_extract, text="Selecciona la imagen con mensaje oculto:").grid(column=0, row=0, padx=10, pady=10, sticky='W')
+        self.stego_image_path = tk.StringVar()
+        ttk.Entry(self.tab_extract, textvariable=self.stego_image_path, width=50).grid(column=1, row=0, padx=10, pady=10)
+        ttk.Button(self.tab_extract, text="Buscar", command=self.browse_stego_image).grid(column=2, row=0, padx=10, pady=10)
+
+        ttk.Label(self.tab_extract, text="Introduce la clave para descifrar:").grid(column=0, row=1, padx=10, pady=10, sticky='W')
+        self.decrypt_key = tk.StringVar()
+        ttk.Entry(self.tab_extract, textvariable=self.decrypt_key, width=50, show='*').grid(column=1, row=1, padx=10, pady=10)
+        ttk.Button(self.tab_extract, text="Cargar Clave", command=self.load_key).grid(column=2, row=1, padx=10, pady=10)
+
+        ttk.Button(self.tab_extract, text="Extraer Mensaje", command=self.extract_message).grid(column=1, row=2, padx=10, pady=10)
+
+    def browse_input_image(self):
+        filename = filedialog.askopenfilename(title="Selecciona la imagen de entrada", filetypes=[("PNG Images", "*.png")])
+        self.input_image_path.set(filename)
+
+    def browse_stego_image(self):
+        filename = filedialog.askopenfilename(title="Selecciona la imagen con mensaje oculto", filetypes=[("PNG Images", "*.png")])
+        self.stego_image_path.set(filename)
+
+    def load_key(self):
+        key_file = filedialog.askopenfilename(title="Selecciona el archivo de clave", filetypes=[("Key Files", "*.key")])
+        if key_file:
+            with open(key_file, 'rb') as f:
+                key = f.read()
+                self.decrypt_key.set(key.decode())
+
+    def generate_key(self):
+        key = Fernet.generate_key()
+        return key
+
+    def hide_message(self):
+        image_path = self.input_image_path.get()
+        message = self.message_to_hide.get("1.0", tk.END).strip()
+
+        if not image_path or not message:
+            messagebox.showerror("Error", "Por favor, completa todos los campos.")
+            return
+
+        # Generar clave y cifrar mensaje
+        key = self.generate_key()
+        fernet = Fernet(key)
+        encrypted_message = fernet.encrypt(message.encode())
+
+        # Convertir mensaje cifrado a cadena base64
+        encoded_message = base64.b64encode(encrypted_message).decode()
+
+        # Ocultar el mensaje en la imagen
+        stego_image_path = self.lsb_hide(image_path, encoded_message)
+
+        if stego_image_path:
+            # Mostrar la clave al usuario
+            self.show_key(key)
+            messagebox.showinfo("Éxito", f"Mensaje ocultado correctamente.\nImagen guardada como {stego_image_path}")
+        else:
+            messagebox.showerror("Error", "No se pudo ocultar el mensaje. Verifica que la imagen sea lo suficientemente grande.")
+
+    def show_key(self, key):
+        key_window = tk.Toplevel(self.root)
+        key_window.title("Clave Generada")
+        ttk.Label(key_window, text="Guarda esta clave para extraer el mensaje:").pack(padx=10, pady=10)
+        key_text = tk.Text(key_window, height=2, width=50)
+        key_text.pack(padx=10, pady=10)
+        key_text.insert(tk.END, key.decode())
+        key_text.config(state='disabled')
+        ttk.Button(key_window, text="Copiar Clave", command=lambda: self.copy_key(key.decode())).pack(padx=10, pady=10)
+        # Guardar clave en un archivo
+        key_path = os.path.splitext(self.input_image_path.get())[0] + "_key.key"
+        with open(key_path, 'wb') as key_file:
+            key_file.write(key)
+
+    def copy_key(self, key):
+        self.root.clipboard_clear()
+        self.root.clipboard_append(key)
+        messagebox.showinfo("Clave Copiada", "La clave ha sido copiada al portapapeles.")
+
+    def extract_message(self):
+        image_path = self.stego_image_path.get()
+        key = self.decrypt_key.get()
+
+        if not image_path or not key:
+            messagebox.showerror("Error", "Por favor, completa todos los campos.")
+            return
+
+        # Extraer mensaje oculto
+        encoded_message = self.lsb_extract(image_path)
+
+        if encoded_message:
+            try:
+                # Decodificar mensaje base64
+                encrypted_message = base64.b64decode(encoded_message)
+                fernet = Fernet(key.encode())
+                decrypted_message = fernet.decrypt(encrypted_message).decode()
+                self.show_extracted_message(decrypted_message)
+            except Exception as e:
+                messagebox.showerror("Error", "Clave incorrecta o mensaje corrupto.")
+        else:
+            messagebox.showerror("Error", "No se pudo extraer el mensaje.")
+
+    def show_extracted_message(self, message):
+        message_window = tk.Toplevel(self.root)
+        message_window.title("Mensaje Extraído")
+        ttk.Label(message_window, text="El mensaje oculto es:").pack(padx=10, pady=10)
+        message_text = tk.Text(message_window, height=10, width=50)
+        message_text.pack(padx=10, pady=10)
+        message_text.insert(tk.END, message)
+        message_text.config(state='disabled')
+
+    def lsb_hide(self, image_path, message):
+        img = Image.open(image_path)
+        array = np.array(img)
+        flat_array = array.flatten()
+
+        # Convertir el mensaje a bits
+        message += chr(0)  # Añadir carácter nulo para indicar el final
+        bits_message = ''.join([format(ord(i), '08b') for i in message])
+        num_bits = len(bits_message)
+
+        if num_bits > len(flat_array):
+            return False  # La imagen no es lo suficientemente grande
+
+        # Ocultar los bits en el bit menos significativo
+        for i in range(num_bits):
+            flat_array[i] = (flat_array[i] & ~1) | int(bits_message[i])
+
+        # Reconstruir el array y guardar la imagen
+        new_array = flat_array.reshape(array.shape)
+        new_img = Image.fromarray(new_array)
+        stego_image_path = os.path.splitext(image_path)[0] + "_stego.png"
+        new_img.save(stego_image_path)
+        return stego_image_path
+
+    def lsb_extract(self, image_path):
+        img = Image.open(image_path)
+        array = np.array(img)
+        flat_array = array.flatten()
+
+        bits = ''
+        for i in range(len(flat_array)):
+            bits += str(flat_array[i] & 1)
+
+        # Convertir bits a caracteres
+        chars = []
+        for i in range(0, len(bits), 8):
+            byte = bits[i:i+8]
+            char = chr(int(byte, 2))
+            if char == chr(0):
+                break
+            chars.append(char)
+
+        if chars:
+            message = ''.join(chars)
+            return message
+        else:
+            return None
+
+if __name__ == "__main__":
+    # Verificar que las librerías necesarias estén instaladas
+    try:
+        import tkinter
+        import numpy
+        from PIL import Image
+        from cryptography.fernet import Fernet
+    except ImportError as e:
+        print(f"Error al importar las librerías: {e}")
+        print("Por favor, instala las librerías necesarias antes de ejecutar el script.")
+        exit(1)
+
+    root = tk.Tk()
+    app = HydeApp(root)
+    root.mainloop()

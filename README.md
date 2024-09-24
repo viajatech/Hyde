@@ -1,4 +1,5 @@
 ![](https://github.com/viajatech/Hyde/blob/main/GUI%20HYDE.png)
+![](https://github.com/viajatech/Hyde/blob/main/Hyde%20Extraer%20Mensaje%20Secreto%20FOTO.png)
 --------
 Con mi script podrás; Guardar mensajes secretos en imágenes con formato .PNG solo selecciona la imagen, escribe el mensaje secreto, guarda la contraseña para cuando tú o tú contacto quiera abrir y decodificar el mensaje secreto. en la sección o pestaña de extraer mensaje dale click, selecciona la imagen stego que contiene el mensaje secreto, copia y pega la contraseña que mi programa te dio y listo! espera unos...20-30 segundos y aparecera en una ventana con el mensaje secreto.
 --------
